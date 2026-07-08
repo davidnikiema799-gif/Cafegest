@@ -498,11 +498,12 @@ function renderDash() {
   recentes.forEach(v=>{
     const div=document.createElement('div');
     div.className='item-row';
-    div.innerHTML=`<div class="item-icon">${v.credit?'📋':'✅'}</div>
+    const cActif = v.credit && credits.find(c=>c.nom===v.client && c.solde>0 && c.date===v.date);
+    div.innerHTML=`<div class="item-icon">${cActif?'📋':'✅'}</div>
       <div class="item-info"><div class="item-name">${v.items.map(i=>i.nom).join(', ')}</div>
       <div class="item-meta">${fmtTime(v.timestamp)} · ${v.items.length} article(s)</div></div>
       <div class="item-right"><div class="item-price">${fmt(v.total)}</div>
-      <div class="item-sub">${v.credit?'<span class="badge b-blue">Crédit</span>':'Comptant'}</div></div>`;
+      <div class="item-sub">${cActif?'<span class="badge b-blue">Crédit</span>':'Comptant'}</div></div>`;
     dashVentes.appendChild(div);
   });
 }
@@ -753,11 +754,13 @@ function renderHistoVentes() {
   ventesJour.forEach(v=>{
     const div=document.createElement('div');
     div.className='item-row';
-    div.innerHTML=`<div class="item-icon">${v.credit?'📋':'✅'}</div>
+    // Vérifier si le crédit est encore actif (non soldé)
+    const creditActif = v.credit && credits.find(c=>c.nom===v.client && c.solde>0 && c.date===v.date);
+    div.innerHTML=`<div class="item-icon">${creditActif?'📋':'✅'}</div>
       <div class="item-info"><div class="item-name">${v.items.map(i=>i.nom+' x'+i.qty).join(', ')}</div>
       <div class="item-meta">${fmtTime(v.timestamp)}${v.client?' · '+v.client:''}</div></div>
       <div class="item-right"><div class="item-price">${fmt(v.total)}</div>
-      ${v.credit?'<span class="badge b-blue">Crédit</span>':''}</div>`;
+      ${creditActif?'<span class="badge b-blue">Crédit</span>':''}</div>`;
     list.appendChild(div);
   });
 }
@@ -874,29 +877,59 @@ function renderRapport() {
       <table class="rapport-table">
         <thead><tr><th>Date</th><th>Articles</th><th class="num">Total</th></tr></thead>
         <tbody>
-          ${ventesP.map(v=>`
-            <tr><td>${fmtDate(v.date)}</td>
-            <td>${v.items.map(i=>i.nom+' x'+i.qty).join(', ')}${v.credit?' (Crédit: '+v.client+')':''}</td>
-            <td class="num">${fmt(v.total)}</td></tr>
-          `).join('')}
+          ${ventesP.map(v=>{
+            const cA = v.credit && credits.find(c=>c.nom===v.client && c.solde>0 && c.date===v.date);
+            return `<tr><td>${fmtDate(v.date)}</td>
+            <td>${v.items.map(i=>i.nom+' x'+i.qty).join(', ')}${cA?' <span style="color:#C62828;font-size:0.65rem">(Crédit: '+v.client+')</span>':v.credit?' <span style="color:#2E7D32;font-size:0.65rem">(Soldé: '+v.client+')</span>':''}</td>
+            <td class="num">${fmt(v.total)}</td></tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>
 
     <div class="rapport-section">
-      <div class="section-title">🤝 Crédits en cours</div>
+      <div class="section-title">📦 Inventaire générale</div>
       <table class="rapport-table">
-        <thead><tr><th>Client</th><th>Date</th><th class="num">Dû</th></tr></thead>
+        <thead><tr><th>Produit</th><th>Catégorie</th><th class="num">Stock</th><th class="num">Val. achat</th><th class="num">Val. vente</th></tr></thead>
         <tbody>
-          ${credits.filter(c=>c.solde>0).map(c=>`
-            <tr><td>${c.nom}</td><td>${fmtDate(c.date)}</td><td class="num">${fmt(c.solde)}</td></tr>
+          ${produits.map(p=>`
+            <tr style="${p.stock===0?'color:#C62828':p.stock<=p.alerte?'color:#E65100':''}">
+              <td>${p.nom}</td>
+              <td>${CAT_LABELS[p.cat]||p.cat}</td>
+              <td class="num"><strong>${p.stock}</strong>${p.stock===0?' ⚠️':p.stock<=p.alerte?' ⚡':''}</td>
+              <td class="num">${fmt(p.stock*p.achat)}</td>
+              <td class="num">${fmt(p.stock*p.vente)}</td>
+            </tr>
           `).join('')}
         </tbody>
       </table>
-      <div class="rapport-total">
-        <span>TOTAL CRÉDITS</span>
-        <span>${fmt(credits.filter(c=>c.solde>0).reduce((s,c)=>s+c.solde,0))}</span>
+      <div class="rapport-total" style="background:#2E7D32">
+        <span>VALEUR STOCK TOTAL (vente)</span>
+        <span>${fmt(produits.reduce((s,p)=>s+p.stock*p.vente,0))}</span>
       </div>
+      <div class="rapport-total" style="background:#1565C0;margin-top:6px">
+        <span>VALEUR STOCK TOTAL (achat)</span>
+        <span>${fmt(produits.reduce((s,p)=>s+p.stock*p.achat,0))}</span>
+      </div>
+    </div>
+
+    <div class="rapport-section">
+      <div class="section-title">🤝 Crédits non soldés</div>
+      ${credits.filter(c=>c.solde>0).length===0
+        ? '<p style="padding:10px 0;color:#8899AA;font-size:0.82rem">✅ Aucun crédit en cours !</p>'
+        : `<table class="rapport-table">
+          <thead><tr><th>Client</th><th>Date</th><th class="num">Initial</th><th class="num">Restant</th></tr></thead>
+          <tbody>
+            ${credits.filter(c=>c.solde>0).map(c=>`
+              <tr><td>${c.nom}</td><td>${fmtDate(c.date)}</td><td class="num">${fmt(c.montant)}</td><td class="num" style="color:#C62828;font-weight:700">${fmt(c.solde)}</td></tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="rapport-total">
+          <span>TOTAL À RÉCUPÉRER</span>
+          <span>${fmt(credits.filter(c=>c.solde>0).reduce((s,c)=>s+c.solde,0))}</span>
+        </div>`
+      }
     </div>
   `;
 }
