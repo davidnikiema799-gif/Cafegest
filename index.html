@@ -16,7 +16,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FBF7F4; colo
 
 /* NAV */
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #E8D5C4; display: flex; z-index: 100; box-shadow: 0 -4px 16px rgba(0,0,0,0.08); }
-.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0 6px; border: none; background: none; cursor: pointer; font-family: inherit; color: #8899AA; font-size: 0.48rem; font-weight: 700; gap: 2px; -webkit-tap-highlight-color: transparent; text-transform: uppercase; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 0 8px; border: none; background: none; cursor: pointer; font-family: inherit; color: #8899AA; font-size: 0.58rem; font-weight: 700; gap: 3px; -webkit-tap-highlight-color: transparent; text-transform: uppercase; }
 .nav-icon { font-size: 1.2rem; line-height: 1; }
 .nav-btn.active { color: #4E342E; }
 
@@ -157,6 +157,52 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FBF7F4; colo
 .ib-text span { display:block; font-size:0.65rem; opacity:0.85; font-weight:400; }
 .ib-btn { background:white; color:#4E342E; border:none; padding:7px 14px; border-radius:99px; font-size:0.75rem; font-weight:700; cursor:pointer; font-family:inherit; }
 .ib-close { background:rgba(255,255,255,0.2); border:none; color:white; width:26px; height:26px; border-radius:50%; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+/* ACTION CARDS DASHBOARD */
+.action-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px 16px 0;
+}
+.action-card {
+  border-radius: 16px;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s, box-shadow 0.15s;
+  text-align: center;
+  border: none;
+  font-family: inherit;
+  text-decoration: none;
+}
+.action-card:active { transform: scale(0.96); }
+.action-card.ventes {
+  background: linear-gradient(135deg, #1B5E20, #2E7D32);
+  box-shadow: 0 6px 20px rgba(46,125,50,0.4);
+}
+.action-card.credits {
+  background: linear-gradient(135deg, #0D47A1, #1565C0);
+  box-shadow: 0 6px 20px rgba(21,101,192,0.4);
+}
+.action-card .ac-icon { font-size: 2rem; }
+.action-card .ac-label { font-size: 0.92rem; font-weight: 800; color: white; }
+.action-card .ac-sub { font-size: 0.65rem; color: rgba(255,255,255,0.7); }
+.action-card .ac-badge {
+  background: rgba(255,255,255,0.2);
+  border-radius: 99px;
+  padding: 3px 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: white;
+  margin-top: 2px;
+}
+
 </style>
 </head>
 <body>
@@ -196,6 +242,22 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FBF7F4; colo
       <div class="stat-label">Stock faible</div>
       <div class="stat-value" id="dash-stock-faible">0</div>
       <div class="stat-sub">produit(s) à réappro</div>
+    </div>
+  </div>
+
+  <!-- Action Cards -->
+  <div class="action-cards">
+    <div class="action-card ventes" onclick="goScreen('ventes')">
+      <div class="ac-icon">💰</div>
+      <div class="ac-label">Nouvelle Vente</div>
+      <div class="ac-sub">Enregistrer une vente</div>
+      <div class="ac-badge" id="ac-ventes-today">0 aujourd'hui</div>
+    </div>
+    <div class="action-card credits" onclick="goScreen('credits')">
+      <div class="ac-icon">🤝</div>
+      <div class="ac-label">Crédits</div>
+      <div class="ac-sub">Suivi des clients</div>
+      <div class="ac-badge" id="ac-credits-nb">0 en cours</div>
     </div>
   </div>
 
@@ -406,12 +468,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: #FBF7F4; colo
 </div>
 
 <nav class="bottom-nav">
-  <button class="nav-btn active" id="nav-dash"      onclick="goScreen('dash')">      <span class="nav-icon">🏠</span><span>Accueil</span></button>
-  <button class="nav-btn"        id="nav-stock"     onclick="goScreen('stock')">     <span class="nav-icon">📦</span><span>Stock</span></button>
-  <button class="nav-btn"        id="nav-ventes"    onclick="goScreen('ventes')">    <span class="nav-icon">💰</span><span>Ventes</span></button>
-  <button class="nav-btn"        id="nav-credits"   onclick="goScreen('credits')">   <span class="nav-icon">🤝</span><span>Crédits</span></button>
-  <button class="nav-btn"        id="nav-inventaire" onclick="goScreen('inventaire')"><span class="nav-icon">📋</span><span>Inventaire</span></button>
-  <button class="nav-btn"        id="nav-rapport"   onclick="goScreen('rapport')">   <span class="nav-icon">📊</span><span>Rapport</span></button>
+  <button class="nav-btn active" id="nav-dash"       onclick="goScreen('dash')">       <span class="nav-icon">🏠</span><span>Accueil</span></button>
+  <button class="nav-btn"        id="nav-stock"      onclick="goScreen('stock')">      <span class="nav-icon">📦</span><span>Stock</span></button>
+  <button class="nav-btn"        id="nav-inventaire" onclick="goScreen('inventaire')"> <span class="nav-icon">📋</span><span>Inventaire</span></button>
+  <button class="nav-btn"        id="nav-rapport"    onclick="goScreen('rapport')">    <span class="nav-icon">📊</span><span>Rapport</span></button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -500,6 +560,10 @@ function renderDash() {
   document.getElementById('dash-credits').textContent = fmt(creditTotal);
   document.getElementById('dash-nb-credits').textContent = nbCredits+' client(s)';
   document.getElementById('dash-stock-faible').textContent = stockFaible;
+
+  // Action cards badges
+  document.getElementById('ac-ventes-today').textContent = ventesJour.length + " aujourd'hui";
+  document.getElementById('ac-credits-nb').textContent = nbCredits + ' en cours';
 
   // Alertes
   const alertesWrap = document.getElementById('alertes-wrap');
